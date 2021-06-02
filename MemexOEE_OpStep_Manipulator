@@ -1,0 +1,251 @@
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName PresentationFramework
+[System.Windows.Forms.Application]::EnableVisualStyles()
+[System.Reflection.Assembly]::LoadWithPartialName('Microsoft.VisualBasic') | Out-Null
+
+$OpStep_Status_Checker           = New-Object system.Windows.Forms.Form
+$OpStep_Status_Checker.ClientSize  = New-Object System.Drawing.Point(900,700)
+$OpStep_Status_Checker.text      = "OpStep_Status_Checker"
+$OpStep_Status_Checker.TopMost   = $false
+$OpStep_Status_Checker.BackColor  = [System.Drawing.ColorTranslator]::FromHtml("#760707")
+
+$txtInput                        = New-Object system.Windows.Forms.TextBox
+$txtInput.multiline              = $false
+$txtInput.text                   = "OpStep #"
+$txtInput.width                  = 200
+$txtInput.height                 = 20
+$txtInput.location               = New-Object System.Drawing.Point(47,69)
+$txtInput.Font                   = New-Object System.Drawing.Font('Microsoft Sans Serif',22)
+
+$btnSubmit                       = New-Object system.Windows.Forms.Button
+$btnSubmit.text                  = "Check"
+$btnSubmit.width                 = 111
+$btnSubmit.height                = 41
+$btnSubmit.location              = New-Object System.Drawing.Point(304,69)
+$btnSubmit.Font                  = New-Object System.Drawing.Font('Microsoft Sans Serif',10)
+$btnSubmit.BackColor             = [System.Drawing.ColorTranslator]::FromHtml("#f6f3f3")
+
+$btnExit                         = New-Object system.Windows.Forms.Button
+$btnExit.text                    = "Exit"
+$btnExit.width                   = 111
+$btnExit.height                  = 41
+$btnExit.location                = New-Object System.Drawing.Point(768,641)
+$btnExit.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',10)
+$btnExit.BackColor               = [System.Drawing.ColorTranslator]::FromHtml("#f6f3f3")
+
+$Label1                          = New-Object system.Windows.Forms.Label
+$Label1.text                     = "Check OpStep Status Section"
+$Label1.AutoSize                 = $true
+$Label1.width                    = 25
+$Label1.height                   = 10
+$Label1.location                 = New-Object System.Drawing.Point(47,19)
+$Label1.Font                     = New-Object System.Drawing.Font('Microsoft Sans Serif',22)
+$Label1.BackColor                = [System.Drawing.ColorTranslator]::FromHtml("#9b9b9b")
+
+$Label2                          = New-Object system.Windows.Forms.Label
+$Label2.text                     = "Change OpStep Status Section"
+$Label2.AutoSize                 = $true
+$Label2.width                    = 25
+$Label2.height                   = 10
+$Label2.location                 = New-Object System.Drawing.Point(47,219)
+$Label2.Font                     = New-Object System.Drawing.Font('Microsoft Sans Serif',22)
+$Label2.BackColor                = [System.Drawing.ColorTranslator]::FromHtml("#9b9b9b")
+
+$txtStatus                       = New-Object system.Windows.Forms.TextBox
+$txtStatus.multiline             = $false
+$txtStatus.text                  = "OpStep State"
+$txtStatus.width                 = 200
+$txtStatus.height                = 20
+$txtStatus.location              = New-Object System.Drawing.Point(47,289)
+$txtStatus.Font                  = New-Object System.Drawing.Font('Microsoft Sans Serif',22)
+
+$btnChange                       = New-Object system.Windows.Forms.Button
+$btnChange.text                  = "Change Status"
+$btnChange.width                 = 111
+$btnChange.height                = 41
+$btnChange.location              = New-Object System.Drawing.Point(305,289)
+$btnChange.Font                  = New-Object System.Drawing.Font('Microsoft Sans Serif',10)
+$btnChange.BackColor             = [System.Drawing.ColorTranslator]::FromHtml("#f6f3f3")
+
+$grpTips                         = New-Object system.Windows.Forms.Groupbox
+$grpTips.height                  = 239
+$grpTips.width                   = 791
+$grpTips.text                    = "Tips:"
+$grpTips.location                = New-Object System.Drawing.Point(54,383)
+
+$TextBox1                        = New-Object system.Windows.Forms.TextBox
+$TextBox1.multiline              = $true
+$TextBox1.text                   = "JobStates:  JobState = 0 --> or Pending - Any Machine is able to run this Opstep JobState = 1 --> or Queued - Only the Machine set in the AssetId can run this Opstep  JobState = 2 --> or Running - This Opstep is currently running on the machine defined in the AssetId  JobState = 3 --> or Completed - This Opstep has been completed."
+$TextBox1.width                  = 779
+$TextBox1.height                 = 200
+$TextBox1.location               = New-Object System.Drawing.Point(47,375)
+$TextBox1.Font                   = New-Object System.Drawing.Font('Microsoft Sans Serif',10)
+$TextBox1.BackColor              = [System.Drawing.ColorTranslator]::FromHtml("#f8e71c")
+
+$chkBoxAssetID                   = New-Object system.Windows.Forms.CheckBox
+$chkBoxAssetID.text              = "Zero Out Asset ID"
+$chkBoxAssetID.AutoSize          = $false
+$chkBoxAssetID.width             = 139
+$chkBoxAssetID.height            = 20
+$chkBoxAssetID.location          = New-Object System.Drawing.Point(500,289)
+$chkBoxAssetID.Font              = New-Object System.Drawing.Font('Microsoft Sans Serif',10)
+$chkBoxAssetID.ForeColor         = [System.Drawing.ColorTranslator]::FromHtml("#ffffff")
+
+$btnChangeAssetID                = New-Object system.Windows.Forms.Button
+$btnChangeAssetID.text           = "Zero Out Asset ID"
+$btnChangeAssetID.width          = 120
+$btnChangeAssetID.height         = 41
+$btnChangeAssetID.location       = New-Object System.Drawing.Point(650,289)
+$btnChangeAssetID.Font           = New-Object System.Drawing.Font('Microsoft Sans Serif',10)
+$btnChangeAssetID.BackColor      = [System.Drawing.ColorTranslator]::FromHtml("#f6f3f3")
+
+
+
+$OpStep_Status_Checker.controls.AddRange(@($txtInput,$btnSubmit,$btnExit,$Label1,$Label2,$txtStatus,$btnChange,$TextBox1,$btnChangeAssetID))
+
+$btnExit.Add_Click({closeForm})
+$btnSubmit.Add_Click({checkOpStepStatus})
+$btnChange.Add_Click({changeOpStepStatus})
+$btnChangeAssetID.Add_Click({zeroOutAssetID})
+
+
+#check opstep id function#########################################################
+function checkOpStepStatus(){
+$OpStepName = $txtInput.Text.Trim()
+
+If (($OpStepName -eq "") -or ($OpStepName -eq "%") -or ($OpStepName -eq "%%"))
+{
+    [Microsoft.VisualBasic.Interaction]::MsgBox("OpStepName cannot be empty. Or % has been entered without a number!")
+    return
+}
+
+$sqlConn = New-Object System.Data.SqlClient.SqlConnection
+$sqlConn.ConnectionString = "Server=ServerName;Initial Catalog=MerlinPlatform;User ID=UserID;password=xxxxxxx"
+
+$sqlConn.Open()
+
+$sqlCmd = $sqlConn.CreateCommand()
+
+$sqlcmd = New-Object System.Data.SqlClient.SqlCommand
+$sqlcmd.Connection = $sqlConn
+$query = “SELECT OpStepName, AssetId, JobState, HasRun FROM [dbo].[PendingOpSteps] WHERE OpStepName like '$OpStepName'”
+$sqlcmd.CommandText = $query
+
+
+$adp = New-Object System.Data.SqlClient.SqlDataAdapter $sqlcmd
+
+$data = New-Object System.Data.DataSet
+$adp.Fill($data) | Out-Null
+
+$Rows = [Int32]$sqlCmd.ExecuteScalar()
+
+If ($Rows -eq 0){
+[System.Windows.MessageBox]::Show('This OpStep does not exist in the table!')
+}
+
+$data.Tables | Out-String -Stream -Width 500 | Out-GridView -Title "Available OpStep Names"
+
+$sqlConn.Close()
+}
+
+################Change OpStep Status Function#########################################################
+
+function changeOpStepStatus(){
+[Int]$OpStepName = $txtInput.Text.Trim()
+
+If ([Int]$OpStepName -eq "") {
+[Microsoft.VisualBasic.Interaction]::MsgBox("OpStepName cannot be empty. Or invalid character!")
+return
+}
+
+[int]$JobState = $txtStatus.Text
+If ($JobState -eq ""){
+[Microsoft.VisualBasic.Interaction]::MsgBox("JobState cannot be empty!")
+return
+}
+
+If (($JobState -ge 4) -or ($JobState -lt 0)) {
+$JobState = 0
+[Microsoft.VisualBasic.Interaction]::MsgBox("JobState cannot be more than 3 or less than 0! If wrong number is entered, JobState variable will automatically be assigned 0 as a safety measure!")
+}
+
+
+#$AssetID = [Microsoft.VisualBasic.Interaction]::InputBox("Enter Asset ID of the machine you want to give this job to. If you leave it blank, it will be reset to none. If unsure, it is safe to leave blank!" + "`nExample of an Asset ID: 00000000-0000-0000-0000-000000000000")
+$sqlConn = New-Object System.Data.SqlClient.SqlConnection
+$sqlConn.ConnectionString = "Server=ServerName;Initial Catalog=MerlinPlatform;User ID=UserID;password=xxxxxxx"
+
+$sqlConn.Open()
+
+$sqlCmd = $sqlConn.CreateCommand()
+
+$sqlcmd = New-Object System.Data.SqlClient.SqlCommand
+$sqlcmd.Connection = $sqlConn
+$query = “UPDATE [dbo].[PendingOpSteps] SET JobState = $JobState WHERE OpStepName = '$OpStepName'”
+
+$sqlcmd.CommandText = $query
+
+
+$adp = New-Object System.Data.SqlClient.SqlDataAdapter $sqlcmd
+
+$data = New-Object System.Data.DataSet
+$adp.Fill($data) | Out-Null
+
+
+
+
+
+$data.Tables
+$sqlConn.Close()
+
+[Microsoft.VisualBasic.Interaction]::MsgBox("JobState changed to $JobState!")
+
+}
+
+################Zero Out Asset ID#########################################################
+
+function zeroOutAssetID(){
+$AssetID = '00000000-0000-0000-0000-000000000000'
+
+If ([Int]$OpStepName -eq "") {
+[Microsoft.VisualBasic.Interaction]::MsgBox("OpStepName cannot be empty. Or invalid character!")
+return
+}
+
+#$AssetID = [Microsoft.VisualBasic.Interaction]::InputBox("Enter Asset ID of the machine you want to give this job to. If you leave it blank, it will be reset to none. If unsure, it is safe to leave blank!" + "`nExample of an Asset ID: 00000000-0000-0000-0000-000000000000")
+$sqlConn = New-Object System.Data.SqlClient.SqlConnection
+$sqlConn.ConnectionString = "Server=ServerName;Initial Catalog=MerlinPlatform;User ID=UserID;password=xxxxxxx"
+
+$sqlConn.Open()
+
+$sqlCmd = $sqlConn.CreateCommand()
+
+$sqlcmd = New-Object System.Data.SqlClient.SqlCommand
+$sqlcmd.Connection = $sqlConn
+$query = “UPDATE [dbo].[PendingOpSteps] SET AssetID = $AssetID WHERE OpStepName = '$OpStepName'”
+
+$sqlcmd.CommandText = $query
+
+
+$adp = New-Object System.Data.SqlClient.SqlDataAdapter $sqlcmd
+
+$data = New-Object System.Data.DataSet
+$adp.Fill($data) | Out-Null
+
+
+
+
+
+$data.Tables
+$sqlConn.Close()
+
+[Microsoft.VisualBasic.Interaction]::MsgBox("Asset ID changed to '00000000-0000-0000-0000-000000000000'")
+
+}
+
+
+
+################Exit Application Function#########################################################
+
+function closeForm(){$OpStep_Status_Checker.close()}
+
+[void]$OpStep_Status_Checker.ShowDialog()
